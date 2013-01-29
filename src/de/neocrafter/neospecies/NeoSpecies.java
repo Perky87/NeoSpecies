@@ -1,6 +1,11 @@
 package de.neocrafter.neospecies;
 
+import java.io.IOException;
+
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import de.neocrafter.neospecies.species.Species;
@@ -10,13 +15,15 @@ public class NeoSpecies extends JavaPlugin
 {
 	private NeoSQL database;
 	private FileConfiguration config;
+	private static NeoSpecies instance;
 	
 	@Override
 	public void onEnable()
 	{
-		config = this.getConfig();
+		instance = this;
+		this.config = this.getConfig();
 		setupConfigDefaults();
-		database = new NeoSQL(this);
+		this.database = new NeoSQL(this);
 		System.out.println(config.getString("database.url"));
 		if (!database.connect(config.getString("database.driver"), config.getString("database.url"), config.getString("database.user"), config.getString("database.password")))
 		{
@@ -25,12 +32,51 @@ public class NeoSpecies extends JavaPlugin
 		}
 		
 		setupDatabases();
-		
-		NeoListener listener = new NeoListener();
-		this.getServer().getPluginManager().registerEvents(listener, this);
-		
-		Species.Type type = Species.Type.valueOf("HUMAN");
-		type.getInstance();
+		loadSpecies();
+	}
+	
+	public NeoSQL getNeoDatabase()
+	{
+		return database;
+	}
+	
+	public static NeoSpecies getInstance()
+	{
+		return instance;
+	}
+	
+	@Override
+	public boolean onCommand(CommandSender sender, Command command, String label, String[] args)
+	{
+		if (label.equalsIgnoreCase("speciesdebug"))
+		{
+			Species species = Species.getPlayer((Player)sender);
+			species.sendMessage("Delegate test");
+			species.sendMessage(""+species.getPower());
+			return true;
+		}
+		return false;
+	}
+	
+	
+	@Override
+	public void reloadConfig()
+	{
+		super.reloadConfig();
+		this.config = this.getConfig();
+	}
+	
+	private void loadSpecies()
+	{
+		SpeciesClassLoader classLoader = new SpeciesClassLoader();
+		classLoader.loadSpecies();
+		try
+		{
+			classLoader.close();
+		} catch (IOException e)
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	private void setupConfigDefaults()
@@ -48,7 +94,7 @@ public class NeoSpecies extends JavaPlugin
 		database.execute("CREATE TABLE IF NOT EXISTS `NeoSpecies_Player` (" +
 				"`ID` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ," +
 				"`Playername` VARCHAR( 16 ) NOT NULL ," +
-				"`Species` INT NOT NULL ," +
+				"`Species` VARCHAR(16) NOT NULL ," +
 				"`Power` TINYINT( 2 ) NOT NULL DEFAULT '0'" +
 				") ENGINE = MYISAM ;");
 		
