@@ -34,7 +34,6 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Snowball;
-import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.inventory.EntityEquipment;
@@ -57,18 +56,12 @@ import de.neocrafter.neospecies.NeoSpecies;
 import de.neocrafter.sql.NeoSQL;
 import de.neocrafter.sql.NeoStatement;
 
-public abstract class Species implements Listener, Player
+public abstract class Species implements Player
 {
 	private static HashMap<String, Class<? extends Species>> species = new HashMap<String, Class<? extends Species>>();
 	private static HashMap<Player,Species> playerMap = new HashMap<Player,Species>(); //Cache the players to cut down on database accesses
 	private Player player;
 	private byte power;
-	
-	protected Species()
-	{
-		Plugin plugin = NeoSpecies.getInstance();
-		plugin.getServer().getPluginManager().registerEvents(this, plugin);
-	}
 	
 	private final void initialize(Player player, byte power)
 	{
@@ -79,6 +72,22 @@ public abstract class Species implements Listener, Player
 	public static void addSpecies(String name, Class<? extends Species> clazz)
 	{
 		species.put(name, clazz);
+	}
+	
+	public boolean setSpecies(String species)
+	{
+		if (!Species.species.containsKey(species))
+		{
+			return false;
+		}
+		NeoSpecies.getInstance().getNeoDatabase().execute("UPDATE `NeoSpecies_Player` SET Species='" + species + "' WHERE Playername='" + this.getName() + "'");
+		playerMap.remove(this.getPlayer());
+		return true;
+	}
+	
+	public static void removePlayerFromCache(Player player)
+	{
+		playerMap.remove(player);
 	}
 	
 	public static Species getPlayer(Player player)
@@ -102,11 +111,13 @@ public abstract class Species implements Listener, Player
 				ret = Species.species.get(species).getDeclaredConstructor().newInstance();
 				ret.initialize(player, power);
 			}
-			//implicit else
-			//Insert player into player table - species human with no power
-			database.execute("INSERT INTO `NeoSpecies_Player` (Playername, Species, Power) VALUES" +
-					"('" + player.getName() + "','human','0')");
-			ret = new Human(player, (byte)0);
+			else
+			{
+				database.execute("INSERT INTO `NeoSpecies_Player` (Playername, Species, Power) VALUES" +
+						"('" + player.getName() + "','human','0')");
+				ret = new Human();
+				ret.initialize(player, (byte)0);
+			}
 		}
 		catch (SQLException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e)
 		{
@@ -123,6 +134,11 @@ public abstract class Species implements Listener, Player
 		return power;
 	}
 	
+	//API methods
+	public Material[] getDisallowedItems()
+	{
+		return new Material[0];
+	}
 	
 	//Delegate methods
 

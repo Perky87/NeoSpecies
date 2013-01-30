@@ -2,13 +2,9 @@ package de.neocrafter.neospecies;
 
 import java.io.IOException;
 
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import de.neocrafter.neospecies.species.Species;
 import de.neocrafter.sql.NeoSQL;
 
 public class NeoSpecies extends JavaPlugin
@@ -31,6 +27,9 @@ public class NeoSpecies extends JavaPlugin
 			return;
 		}
 		
+		this.getCommand("species").setExecutor(new CommandHandler());
+		this.getServer().getPluginManager().registerEvents(new SpeciesListener(), this);
+		
 		setupDatabases();
 		loadSpecies();
 	}
@@ -43,19 +42,6 @@ public class NeoSpecies extends JavaPlugin
 	public static NeoSpecies getInstance()
 	{
 		return instance;
-	}
-	
-	@Override
-	public boolean onCommand(CommandSender sender, Command command, String label, String[] args)
-	{
-		if (label.equalsIgnoreCase("speciesdebug"))
-		{
-			Species species = Species.getPlayer((Player)sender);
-			species.sendMessage("Delegate test");
-			species.sendMessage(""+species.getPower());
-			return true;
-		}
-		return false;
 	}
 	
 	
@@ -93,7 +79,7 @@ public class NeoSpecies extends JavaPlugin
 	{
 		database.execute("CREATE TABLE IF NOT EXISTS `NeoSpecies_Player` (" +
 				"`ID` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ," +
-				"`Playername` VARCHAR( 16 ) NOT NULL ," +
+				"`Playername` VARCHAR( 16 ) UNIQUE NOT NULL ," +
 				"`Species` VARCHAR(16) NOT NULL ," +
 				"`Power` TINYINT( 2 ) NOT NULL DEFAULT '0'" +
 				") ENGINE = MYISAM ;");

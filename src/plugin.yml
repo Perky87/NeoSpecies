@@ -6,7 +6,9 @@ website: www.neocrafter.de
 main: de.neocrafter.neospecies.NeoSpecies
 #softdepend: []
 commands:
-    speciesdebug:
+    species:
         description: lmaa
-#permissions:
-#
+permissions:
+    admin:
+        assign:
+            description: lmaa

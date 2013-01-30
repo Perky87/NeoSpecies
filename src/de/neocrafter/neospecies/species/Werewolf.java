@@ -1,11 +1,26 @@
 package de.neocrafter.neospecies.species;
 
-import org.bukkit.entity.Player;
+import org.bukkit.Material;
 
 public class Werewolf extends Species
 {
-	protected Werewolf(Player player, byte power)
+	@Override
+	public Material[] getDisallowedItems()
 	{
-		super(player, power);
+		return new Material[]
+		{
+			Material.BREAD,
+			Material.MELON,
+			Material.POTATO,
+			Material.BAKED_POTATO,
+			Material.APPLE,
+			Material.CARROT,
+			Material.COOKIE,
+			Material.GOLDEN_APPLE,
+			Material.GOLDEN_CARROT,
+			Material.MUSHROOM_SOUP,
+			Material.POISONOUS_POTATO,
+			Material.SPIDER_EYE
+		};
 	}
 }
