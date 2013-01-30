@@ -64,10 +64,14 @@ public abstract class Species implements Listener, Player
 	private Player player;
 	private byte power;
 	
-	protected Species(Player player, byte power)
+	protected Species()
 	{
 		Plugin plugin = NeoSpecies.getInstance();
 		plugin.getServer().getPluginManager().registerEvents(this, plugin);
+	}
+	
+	private final void initialize(Player player, byte power)
+	{
 		this.player = player;
 		this.power = power;
 	}
@@ -95,7 +99,8 @@ public abstract class Species implements Listener, Player
 				byte power = result.getByte("Power");
 				String species = result.getString("Species");
 				
-				ret = Species.species.get(species).getDeclaredConstructor(Player.class, byte.class).newInstance(player, power);
+				ret = Species.species.get(species).getDeclaredConstructor().newInstance();
+				ret.initialize(player, power);
 			}
 			//implicit else
 			//Insert player into player table - species human with no power
